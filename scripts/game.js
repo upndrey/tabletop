@@ -1,14 +1,47 @@
-import '../styles/index.scss';
+/*
+{
+    'grid': [
+        [[null, 3], [null, 2], [null, 3]],
+        [[null, 2], [null, 1], [null, 2]],
+        [[null, 3], [null, 2], [null, 3]],
+    ],
+    'players': [
+        [id, login],
+        [id, login],
+        [id, login],
+        [id, login]
+    ],
+    'status': 'lobby'|'game'|'closed',
+    'turn'
+}
+*/
 
-document.addEventListener("DOMContentLoaded", () => {
-    let w = 1000;
-    let h = 900;
-    let canvas = document.querySelector(".canvas");
-    let ctx = canvas.getContext('2d');
-    let ball = new Ball(20);
-    document.addEventListener("mousedown", ball.move.bind(ball));
-    setInterval(draw.bind(this, canvas, ctx, ball, w, h), 10);
+document.addEventListener("DOMContentLoaded", async () => {
+    let link = window.location.search.substring(1);
+    let promise = gameInfo(link);
+    promise.then((data) => {
+        if(data) {
+            let w = 1000;
+            let h = 900;
+            let canvas = document.querySelector(".canvas");
+            let ctx = canvas.getContext('2d');
+            let ball = new Ball(20);
+            document.addEventListener("mousedown", ball.move.bind(ball));
+            setInterval(draw.bind(this, canvas, ctx, ball, w, h), 10);
+        }
+    });
 });
+
+async function gameInfo(link) {
+    let formData = new FormData();
+    formData.append('link', link);
+    let url = "http://tabletop/php/getData.php";
+    let response = await fetch(url, {
+        method: 'POST',
+        body: formData
+    });
+    return await response.json();
+}
 
 function Ball(Radius) {
     this.x = 25;
@@ -16,14 +49,13 @@ function Ball(Radius) {
     this.r = Radius;
 }
 
-Ball.prototype.move = function (e, h) {
+Ball.prototype.move = function (e) {
     if(
         e.x >= this.x - this.r &&
         e.x <= this.x + this.r &&
         e.y >= this.y - this.r &&
         e.y <= this.y + this.r
     ) {
-        console.log(this);
         let handler = mouseMoveEvent.bind(this);
         document.addEventListener("mousemove", handler);
         document.addEventListener("mouseup", mouseUpEvent.bind(this, handler), {once: true});
