@@ -7,9 +7,11 @@
 </head>
 <body>
 <form action="/php/startGame.php" method="post" class="startGame">
-    <input type="text" name="login" placeholder="Введите ваш логин">
-    <input type="hidden" name="link">
-    <input type="submit" value="Новая игра">
+    <input type="text" name="new_login" placeholder="Введите ваш логин">
+    <input type="submit" value="Новая игра" name="new_game">
+    <input type="text" name="connect_login" placeholder="Введите ваш логин">
+    <input type="text" name="connect_link">
+    <input type="submit" value="Подключиться" name="connect">
 </form>
 </body>
 <script src="scripts/index.js"></script>
