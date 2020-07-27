@@ -1,86 +1,16 @@
-/*
-{
-    'grid': [
-        [[null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell], [null, 2, cell]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell], [null, 1, cell]],
-        [[null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word], [null, 3, word]]
-    ],
-    'players': [
-        [id, login, user_items, points],
-        [id, login, user_items, points],
-        [id, login, user_items, points],
-        [id, login, user_items, points]
-    ],
-    'status': 'lobby'|'game'|'closed',
-    'turn': 1,
-    'items': [
-        ['а', 3, 5],
-        ['б', 3, 5],
-        ['в', 3, 5],
-        ['г', 3, 5],
-        ['д', 3, 5],
-        ['е', 3, 5],
-        ['ё', 3, 5],
-        ['ж', 3, 5],
-        ['з', 3, 5],
-        ['и', 3, 5],
-        ['й', 3, 5],
-        ['к', 3, 5],
-        ['л', 3, 5],
-        ['м', 3, 5],
-        ['н', 3, 5],
-        ['о', 3, 5],
-        ['п', 3, 5],
-        ['р', 3, 5],
-        ['с', 3, 5],
-        ['т', 3, 5],
-        ['у', 3, 5],
-        ['ф', 3, 5],
-        ['х', 3, 5],
-        ['ц', 3, 5],
-        ['ч', 3, 5],
-        ['ш', 3, 5],
-        ['щ', 3, 5],
-        ['ъ', 3, 5],
-        ['ы', 3, 5],
-        ['ь', 3, 5],
-        ['э', 3, 5],
-        ['ю', 3, 5],
-        ['я', 3, 5]
-    ]
-}
-user_items = {
-    'А': 3,
-    'Б': 1,
-    'В': 2,
-    'Г': 1
-}
-*/
-
+let link = null;
 document.addEventListener("DOMContentLoaded", async () => {
     let temp = window.location.search.substring(1).split(":");
-    let link = temp[0];
+    link = temp[0];
     let login = temp[1];
     await connectUser(link, login)
         .then((doesConnected) => {
             console.log(doesConnected);
-            if(!doesConnected) {
+            if(doesConnected) { // Заменить после дебаггинга
                 alert("Пользователя не существует, либо он находится в игре!");
             }
             else {
-                gameInfo(link).then((data) => {
+                gameInfo().then((data) => {
                     if(data) {
                         startGame(data);
                     }
@@ -106,16 +36,42 @@ async function connectUser(link, login) {
 
 function startGame(data) {
     console.log(data);
-    let w = 1000;
-    let h = 900;
+    let grid = JSON.parse(data['game_grid']);
+    let link = data['link'];
+    let w = 900;
+    let h = 1000;
     let canvas = document.querySelector(".canvas");
     let ctx = canvas.getContext('2d');
-    let ball = new Ball(20);
+    let coords = [0, 0, null];
+    for(let i = 0; i < grid.length; i++) {
+        for(let j = 0; j < grid[0].length; j++) {
+            if(grid[i][j][0] !== null) {
+                coords = [i, j, grid[i][j][0]];
+            }
+        }
+    }
+    let ball = new Ball(w/30, coords[0], coords[1], w/15, coords[2], grid);
     document.addEventListener("mousedown", ball.move.bind(ball));
     setInterval(draw.bind(this, canvas, ctx, ball, w, h), 10);
+    setInterval(updateData.bind(this, ball), 15000);
 }
-
-async function gameInfo(link) {
+async function updateData(ball) {
+    let promise = gameInfo(link);
+    promise.then((data) => {
+        let grid = JSON.parse(data['game_grid']);
+        let coords = [0, 0, null];
+        for(let i = 0; i < grid.length; i++) {
+            for(let j = 0; j < grid[0].length; j++) {
+                if(grid[i][j][0] !== null) {
+                    coords = [i, j, grid[i][j][0]];
+                }
+            }
+        }
+        ball.x = coords[0];
+        ball.y = coords[1];
+    });
+}
+async function gameInfo() {
     let formData = new FormData();
     formData.append('link', link);
     let url = "http://tabletop/php/getData.php";
@@ -126,40 +82,64 @@ async function gameInfo(link) {
     return await response.json();
 }
 
-function Ball(Radius) {
-    this.x = 25;
-    this.y = 25;
+function Ball(Radius = 20, x = 0, y = 0, scale=50, value="а", grid) {
+    this.x = x;
+    this.y = y;
+    this.scale = scale;
     this.r = Radius;
+    this.value = value;
+    this.grid = grid;
 }
 
 Ball.prototype.move = function (e) {
     if(
-        e.x >= this.x - this.r &&
-        e.x <= this.x + this.r &&
-        e.y >= this.y - this.r &&
-        e.y <= this.y + this.r
+        e.x >= (this.x - this.r) * this.scale &&
+        e.x <= (this.x + this.r) * this.scale &&
+        e.y >= (this.y - this.r) * this.scale &&
+        e.y <= (this.y + this.r) * this.scale
     ) {
         let handler = mouseMoveEvent.bind(this);
+
+        this.grid[this.x][this.y][0] = null;
         document.addEventListener("mousemove", handler);
         document.addEventListener("mouseup", mouseUpEvent.bind(this, handler), {once: true});
     }
 };
 
-let mouseUpEvent = function (handler) {
+let mouseUpEvent = async function (handler) {
     this.r = 20;
-    document.removeEventListener("mousemove", handler);
+    await changePosition(this);
+    await document.removeEventListener("mousemove", handler);
 };
 
+async function changePosition(ball) {
+    ball.grid[ball.x][ball.y][0] = ball.value;
+    let formData = new FormData();
+    formData.append('link', link);
+    formData.append('grid', JSON.stringify(ball.grid));
+    formData.append('data', 'position');
+    let url = "http://tabletop/php/changeData.php";
+    let response = await fetch(url, {
+        method: 'POST',
+        body: formData
+    });
+    return await response.json();
+}
+
+
 let mouseMoveEvent = function (e) {
-    this.r = 25;
-    if(e.y < 800 && e.x > 0 && e.x < 1000) {
-        this.x = Math.floor(e.x / 50) * 50 + 25;
-        this.y = Math.floor(e.y / 50) * 50 + 25;
+    let size = 900 / 15;
+    this.r = size / 2;
+    if(e.y < 800 && e.x > 0 && e.x < 900) {
+        this.x = Math.floor(e.x / size) * size;
+        this.y = Math.floor(e.y / size) * size;
     }
     else if(e.y < 875 && e.x > 25 && e.x < 975){
         this.x = e.x;
         this.y = e.y;
     }
+    this.x = this.x / this.scale;
+    this.y = this.y / this.scale;
 };
 
 function draw(canvas, ctx, ball, w, h) {
@@ -171,12 +151,12 @@ function draw(canvas, ctx, ball, w, h) {
 }
 
 function drawGrid(ctx, w, h) {
-    for (let x=0; x<=w; x+=50) {
+    for (let x=0; x<=w; x+= w/15) {
         ctx.moveTo(x, 0);
         ctx.lineTo(x, h - 100);
         ctx.stroke();
     }
-    for (let y=0; y<=h - 100; y+=50) {
+    for (let y=0; y <= h - 100; y += (h - 100)/15) {
         ctx.moveTo(0, y);
         ctx.lineTo(w, y);
         ctx.stroke();
@@ -185,7 +165,7 @@ function drawGrid(ctx, w, h) {
 
 function drawBall(ctx, ball) {
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, 2 * Math.PI, false);
+    ctx.arc(ball.x * ball.scale + ball.r, ball.y * ball.scale + ball.r, ball.r, 0, 2 * Math.PI, false);
     ctx.lineWidth = 3;
     ctx.strokeStyle = '#FF0000';
     ctx.stroke();

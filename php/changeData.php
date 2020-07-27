@@ -1,7 +1,7 @@
 <?php
 require_once "connection.php";
 
-if(isset($_POST['data']) && $_POST['data'] === 'players') {
+if($_POST['data'] === 'players') {
     $gameLink = $_POST['link'];
     $login = $_POST['login'];
 
@@ -24,4 +24,12 @@ if(isset($_POST['data']) && $_POST['data'] === 'players') {
     }
     else
         echo json_encode(false);
+}
+else if($_POST['data'] === 'position') {
+    $gameLink = $_POST['link'];
+    $gameGrid = $_POST['grid'];
+
+    $query = "UPDATE game SET game_grid='$gameGrid' WHERE link='$gameLink'";
+    mysqli_query($link, $query);
+    echo json_encode(true);
 }
