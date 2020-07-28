@@ -1,4 +1,10 @@
 let link = null;
+
+const WIDTH = 15;
+const HEIGHT = 15;
+const SIZE = 900;
+const SCALE = SIZE/WIDTH;
+
 document.addEventListener("DOMContentLoaded", async () => {
     let temp = window.location.search.substring(1).split(":");
     link = temp[0];
@@ -20,7 +26,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function connectUser(link, login) {
-    console.log(link, login);
     let formData = new FormData();
     formData.append('link', link);
     formData.append('login', login);
@@ -35,13 +40,7 @@ async function connectUser(link, login) {
 
 
 function startGame(data) {
-    console.log(data);
     let grid = JSON.parse(data['game_grid']);
-    let link = data['link'];
-    let w = 900;
-    let h = 1000;
-    let canvas = document.querySelector(".canvas");
-    let ctx = canvas.getContext('2d');
     let coords = [0, 0, null];
     for(let i = 0; i < grid.length; i++) {
         for(let j = 0; j < grid[0].length; j++) {
@@ -50,27 +49,31 @@ function startGame(data) {
             }
         }
     }
-    let ball = new Ball(w/30, coords[0], coords[1], w/15, coords[2], grid);
-    document.addEventListener("mousedown", ball.move.bind(ball));
-    setInterval(draw.bind(this, canvas, ctx, ball, w, h), 10);
-    setInterval(updateData.bind(this, ball), 15000);
+    let letter = new Letter(coords[0], coords[1], coords[2], grid);
+    let map = new Map(grid, ".canvas", letter);
+
+    document.addEventListener("mousedown", letter.move.bind(letter));
 }
-async function updateData(ball) {
+
+async function updateData(letter) {
     let promise = gameInfo(link);
     promise.then((data) => {
         let grid = JSON.parse(data['game_grid']);
         let coords = [0, 0, null];
         for(let i = 0; i < grid.length; i++) {
-            for(let j = 0; j < grid[0].length; j++) {
+            for(let j = 0; j < grid.length; j++) {
                 if(grid[i][j][0] !== null) {
                     coords = [i, j, grid[i][j][0]];
                 }
             }
         }
-        ball.x = coords[0];
-        ball.y = coords[1];
+        letter.x = coords[0];
+        letter.y = coords[1];
+        letter.value = coords[2];
+        console.log("update:", letter.x, letter.y);
     });
 }
+
 async function gameInfo() {
     let formData = new FormData();
     formData.append('link', link);
@@ -82,41 +85,43 @@ async function gameInfo() {
     return await response.json();
 }
 
-function Ball(Radius = 20, x = 0, y = 0, scale=50, value="а", grid) {
+////// LETTER ///////
+function Letter(x = 0, y = 0, value="а", grid) {
     this.x = x;
     this.y = y;
-    this.scale = scale;
-    this.r = Radius;
     this.value = value;
     this.grid = grid;
+    this.updateInterval = setInterval(updateData, 1000, this);
 }
 
-Ball.prototype.move = function (e) {
+Letter.prototype.move = function (e) {
     if(
-        e.x >= (this.x - this.r) * this.scale &&
-        e.x <= (this.x + this.r) * this.scale &&
-        e.y >= (this.y - this.r) * this.scale &&
-        e.y <= (this.y + this.r) * this.scale
+        e.x >= this.x * SCALE &&
+        e.x <= this.x * SCALE + SCALE &&
+        e.y >= this.y * SCALE &&
+        e.y <= this.y * SCALE + SCALE
     ) {
         let handler = mouseMoveEvent.bind(this);
+        clearInterval(this.updateInterval);
 
         this.grid[this.x][this.y][0] = null;
-        document.addEventListener("mousemove", handler);
         document.addEventListener("mouseup", mouseUpEvent.bind(this, handler), {once: true});
+        document.addEventListener("mousemove", handler);
     }
 };
 
 let mouseUpEvent = async function (handler) {
-    this.r = 20;
+    document.removeEventListener("mousemove", handler);
     await changePosition(this);
-    await document.removeEventListener("mousemove", handler);
+    this.updateInterval = await setInterval(updateData, 1000, this);
 };
 
-async function changePosition(ball) {
-    ball.grid[ball.x][ball.y][0] = ball.value;
+async function changePosition(letter) {
+    console.log("change:", letter.x, letter.y);
+    letter.grid[letter.x][letter.y][0] = letter.value;
     let formData = new FormData();
     formData.append('link', link);
-    formData.append('grid', JSON.stringify(ball.grid));
+    formData.append('grid', JSON.stringify(letter.grid));
     formData.append('data', 'position');
     let url = "http://tabletop/php/changeData.php";
     let response = await fetch(url, {
@@ -128,45 +133,46 @@ async function changePosition(ball) {
 
 
 let mouseMoveEvent = function (e) {
-    let size = 900 / 15;
-    this.r = size / 2;
-    if(e.y < 800 && e.x > 0 && e.x < 900) {
-        this.x = Math.floor(e.x / size) * size;
-        this.y = Math.floor(e.y / size) * size;
-    }
-    else if(e.y < 875 && e.x > 25 && e.x < 975){
-        this.x = e.x;
-        this.y = e.y;
-    }
-    this.x = this.x / this.scale;
-    this.y = this.y / this.scale;
+    this.x = Math.floor(e.x / SCALE);
+    this.y = Math.floor(e.y / SCALE);
+    console.log("draw:", this.x, this.y);
 };
 
-function draw(canvas, ctx, ball, w, h) {
-    ctx.canvas.width  = w;
-    ctx.canvas.height = h;
-    ctx.clearRect(0, 0, w, h);
-    drawGrid(ctx, w, h);
-    drawBall(ctx, ball);
+
+////// MAP ///////
+
+function Map(grid, canvas, letter) {
+    this.grid = grid;
+    this.canvas = document.querySelector(canvas);
+    this.ctx = this.canvas.getContext("2d");
+    setInterval(this.draw.bind(this), 10, letter);
 }
 
-function drawGrid(ctx, w, h) {
-    for (let x=0; x<=w; x+= w/15) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h - 100);
-        ctx.stroke();
-    }
-    for (let y=0; y <= h - 100; y += (h - 100)/15) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-    }
-}
+Map.prototype.draw = function (letter) {
+    this.ctx.canvas.width  = SIZE;
+    this.ctx.canvas.height = SIZE;
+    this.ctx.clearRect(0, 0, SIZE, SIZE);
+    this.drawGrid();
+    this.drawLetter(letter);
+};
 
-function drawBall(ctx, ball) {
-    ctx.beginPath();
-    ctx.arc(ball.x * ball.scale + ball.r, ball.y * ball.scale + ball.r, ball.r, 0, 2 * Math.PI, false);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#FF0000';
-    ctx.stroke();
-}
+Map.prototype.drawGrid = function() {
+    for (let x = 0; x <= WIDTH; x++) {
+        this.ctx.moveTo(x * SCALE, 0);
+        this.ctx.lineTo(x * SCALE, SIZE);
+        this.ctx.stroke();
+    }
+    for (let y = 0; y <= HEIGHT; y++) {
+        this.ctx.moveTo(0, y * SCALE);
+        this.ctx.lineTo(SIZE, y * SCALE);
+        this.ctx.stroke();
+    }
+};
+
+Map.prototype.drawLetter = function(letter) {
+    this.ctx.beginPath();
+    this.ctx.rect(letter.x * SCALE, letter.y * SCALE, SCALE, SCALE);
+    this.ctx.lineWidth = 3;
+    this.ctx.strokeStyle = '#FF0000';
+    this.ctx.stroke();
+};
