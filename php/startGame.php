@@ -15,14 +15,14 @@ if(isset($_POST['new_game'])) {
     $items = json_encode($row['list'], JSON_UNESCAPED_UNICODE);
 
     $players = [];
-    array_push($players, [$login, false]);
-    $players = json_encode($players);
+    array_push($players, [$login, false, [null, null, null, null, null, null, null], 0]);
+    $players = json_encode($players, JSON_UNESCAPED_UNICODE);
 
     $status = "lobby";
 
     $gameLink = uniqid(rand(), 1);
 
-    $query = "INSERT INTO game (game_grid, players, status, items, link) VALUES (" . $grid .", '$players', '$status', " . $items . ", '$gameLink')";
+    $query = "INSERT INTO game (game_grid, players, status, items, link) VALUES (" . $grid .",'" .$players. "', '$status', " . $items . ", '$gameLink')";
     mysqli_query($link, $query);
     header('Location: http://tabletop/game.html?' . $gameLink . ":" . $login);
     exit;
