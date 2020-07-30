@@ -28,8 +28,9 @@ if($_POST['data'] === 'players') {
 else if($_POST['data'] === 'position') {
     $gameLink = $_POST['link'];
     $gameGrid = $_POST['grid'];
+    $players = $_POST['players'];
 
-    $query = "UPDATE game SET game_grid='$gameGrid' WHERE link='$gameLink'";
+    $query = "UPDATE game SET players='$players', game_grid='$gameGrid' WHERE link='$gameLink'";
     mysqli_query($link, $query);
     echo json_encode(true);
 }
@@ -40,5 +41,5 @@ else if($_POST['data'] === 'moveInHand') {
 
     $query = "UPDATE game SET players='$players', game_grid='$gameGrid' WHERE link='$gameLink'";
     mysqli_query($link, $query);
-    echo json_encode($players);
+    echo json_encode(true);
 }
