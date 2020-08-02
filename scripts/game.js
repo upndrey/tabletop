@@ -3,7 +3,7 @@ let login = null;
 
 const WIDTH = 15;
 const HEIGHT = 15;
-const CANVAS_WIDTH = 1400;
+const CANVAS_WIDTH = 750;
 const CANVAS_HEIGHT = 900;
 const GRID_SIZE = 750;
 const SCALE = GRID_SIZE/WIDTH;
@@ -20,19 +20,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             else {
                 gameInfo().then((data) => {
                     if(data) {
+                        let menu = new Menu(JSON.parse(data['players']), data['turn']);
                         let status = data['status'];
+                        let startGameDom = document.getElementById("js-startGame");
                         if(status === "game") {
+                            clearInterval(menu.updatePlayers);
                             startGame(data);
+                            startGameDom.className = "hidden";
                         }
                         else if(status === "lobby") {
-                            let startGameDom = document.getElementById("startGame");
                             let handler = async () => {
                                 await fillHand();
                                 await firstTurn();
                                 await gameInfo().then((new_data) => {
                                     startGame(new_data);
                                 });
-                                startGameDom.classList = "hidden";
+                                startGameDom.className = "hidden";
                                 startGameDom.removeEventListener("click", handler);
                             };
                             startGameDom.addEventListener("click", handler);
@@ -103,7 +106,8 @@ function startGame(data) {
         }
     }
 
-    let map = new Map(grid, ".canvas", letters, player);
+    let map = new Map(grid, ".js-canvas", letters, player);
+    let menu = new Menu(JSON.parse(data['players']), data['turn']);
 }
 
 async function fillHand() {
@@ -158,6 +162,48 @@ async function gameInfo() {
     });
     return await response.json();
 }
+
+/////// MENU /////////
+function Menu(players, turn) {
+    this.players = players;
+    this.turn = turn;
+    this.showPlayers();
+    if(this.turn)
+        this.currentTurn();
+    this.updatePlayers = setInterval(this.getPlayers.bind(this), 1000);
+}
+
+Menu.prototype.getPlayers = async function () {
+   await gameInfo().then((data) => {
+       this.players = JSON.parse(data['players']);
+       this.showPlayers();
+   });
+};
+
+Menu.prototype.showPlayers = function () {
+    let dom = document.querySelector(".js-players");
+    while(dom.firstChild) {
+        dom.removeChild(dom.lastChild);
+    }
+    this.players.forEach((elem) => {
+        let div = document.createElement("div");
+        div.className = "players__row row";
+        div.innerHTML = `<div>${elem[0]}</div><div>${elem[3]}б.</div>`;
+        dom.appendChild(div);
+    });
+};
+
+Menu.prototype.currentTurn = function () {
+    let turnDom = document.querySelector(".js-currentTurn");
+    let playerDom = document.querySelector(".js-currentPlayer");
+    turnDom.innerHTML = this.turn;
+    let currentPlayer = this.players[this.players.length / (parseInt(this.turn)+ 1) - 1];
+    playerDom.innerHTML = currentPlayer[0];
+};
+
+Menu.prototype.nextTurn = function () {
+
+};
 
 ////// LETTER ///////
 function Letter(x = 0, y = 0, value="а", grid, players) {

@@ -36,13 +36,15 @@ else {
     $row = mysqli_fetch_assoc($result);
     $players = json_decode($row['players']);
     $tempLogin = $login;
-    $i = 1;
-    while(in_array($tempLogin, $players)){
+    $i = 0;
+    $existLogin = $players[$i][0];
+    while($tempLogin === $existLogin){
         $tempLogin = $login . $i;
         $i++;
+        $existLogin = $players[$i][0];
     }
-    $login = $tempLogin;
-    array_push($players, [$login, false]);
+    $temp = [$tempLogin, false, [null, null, null, null, null, null, null], 0];
+    array_push($players, $temp);
     $players = json_encode($players);
 
     $query = "UPDATE game SET players='$players' WHERE link='$gameLink'";

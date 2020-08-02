@@ -3,12 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./styles/index.css">
     <title>tabletop</title>
 </head>
 <body>
-    <canvas class="canvas" width="1000px" height="900"></canvas>
-    <button>Закончить ход</button>
-    <button id="startGame">Начать игру</button>
+    <div class="game">
+        <canvas class="game_canvas js-canvas" width="1000px" height="900"></canvas>
+        <div class="game__menu menu">
+            <div>Игроки:</div>
+            <div class="players js-players"></div>
+            <div>Ход игрока: <span class="js-currentPlayer"></span></div>
+            <div>Номер хода: <span class="js-currentTurn"></span></div>
+            <div class="menu__controllers controllers">
+                <button class="hidden">Закончить ход</button>
+                <button id="js-startGame">Начать игру</button>
+            </div>
+        </div>
+    </div>
 </body>
 <script src="scripts/game.js"></script>
 </html>
