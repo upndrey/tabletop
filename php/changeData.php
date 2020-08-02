@@ -34,12 +34,34 @@ else if($_POST['data'] === 'position') {
     mysqli_query($link, $query);
     echo json_encode(true);
 }
-else if($_POST['data'] === 'moveInHand') {
+else if($_POST['data'] === 'status') {
     $gameLink = $_POST['link'];
-    $gameGrid = $_POST['grid'];
-    $players = $_POST['players'];
 
-    $query = "UPDATE game SET players='$players', game_grid='$gameGrid' WHERE link='$gameLink'";
+    $query = "UPDATE game SET status='game', turn='0' WHERE link='$gameLink'";
+    mysqli_query($link, $query);
+    echo json_encode(true);
+}
+else if($_POST['data'] === 'fillHand') {
+    $gameLink = $_POST['link'];
+    $player = $_POST['player'];
+    $query = "SELECT items, players FROM game WHERE link='$gameLink'";
+    $result = mysqli_query($link, $query);
+    $row = mysqli_fetch_assoc($result);
+    $items = json_decode($row['items']);
+    $players = json_decode($row['players']);
+    shuffle($items);
+    for($i = 0; $i < count($players); $i++) {
+        if($players[$i][0] === $player) {
+            $tempPlayer = $players[$i][2];
+            for($j = 0; $j < count($tempPlayer); $j++)
+                $tempPlayer[$j] = array_pop($items);
+            $players[$i][2] = $tempPlayer;
+        }
+    }
+
+    $players = json_encode($players, JSON_UNESCAPED_UNICODE);
+    $items = json_encode($items, JSON_UNESCAPED_UNICODE);
+    $query = "UPDATE game SET items='$items', players='$players' WHERE link='$gameLink'";
     mysqli_query($link, $query);
     echo json_encode(true);
 }

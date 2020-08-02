@@ -20,7 +20,24 @@ document.addEventListener("DOMContentLoaded", async () => {
             else {
                 gameInfo().then((data) => {
                     if(data) {
-                        startGame(data);
+                        let status = data['status'];
+                        if(status === "game") {
+                            startGame(data);
+                        }
+                        else if(status === "lobby") {
+                            let startGameDom = document.getElementById("startGame");
+                            let handler = async () => {
+                                await fillHand();
+                                await firstTurn();
+                                await gameInfo().then((new_data) => {
+                                    startGame(new_data);
+                                });
+                                startGameDom.classList = "hidden";
+                                startGameDom.removeEventListener("click", handler);
+                            };
+                            startGameDom.addEventListener("click", handler);
+
+                        }
                     }
                 });
             }
@@ -40,6 +57,18 @@ async function connectUser() {
     return await promise.json();
 }
 
+
+async function firstTurn() {
+    let formData = new FormData();
+    formData.append('link', link);
+    formData.append('data', 'status');
+    let url = "http://tabletop/php/changeData.php";
+    let promise = await fetch(url, {
+        method: 'POST',
+        body: formData
+    });
+    return await promise.json();
+}
 
 ///////////////////////// START GAME //////////////////////////////////////////
 
@@ -75,6 +104,19 @@ function startGame(data) {
     }
 
     let map = new Map(grid, ".canvas", letters, player);
+}
+
+async function fillHand() {
+    let formData = new FormData();
+    formData.append('link', link);
+    formData.append('player', login);
+    formData.append('data', 'fillHand');
+    let url = "http://tabletop/php/changeData.php";
+    let promise = await fetch(url, {
+        method: 'POST',
+        body: formData
+    });
+    return await promise.json();
 }
 
 async function updateData(letter) {
@@ -190,29 +232,6 @@ async function changePosition(letter, flag) {
     return await response.json();
 }
 
-async function moveInHand(letter) {
-    let player = letter.players.find((elem) => {
-        return elem[0] === login;
-    });
-    player[2][letter.x - 1] = letter.value;
-    letter.players = letter.players.map((elem) => {
-        if(elem[0] === login)
-            elem = player;
-        return elem;
-    });
-    let formData = new FormData();
-    formData.append('link', link);
-    formData.append('grid', JSON.stringify(letter.grid));
-    formData.append('players', JSON.stringify(letter.players));
-    formData.append('data', 'moveInHand');
-    let url = "http://tabletop/php/changeData.php";
-    let response = await fetch(url, {
-        method: 'POST',
-        body: formData
-    });
-    return await response.json();
-}
-
 
 let mouseMoveEvent = function (e) {
     this.x = Math.floor(e.x / SCALE);
@@ -251,10 +270,32 @@ Map.prototype.drawGrid = function() {
     }
     for (let x = 0; x < WIDTH; x++) {
         for (let y = 0; y < HEIGHT; y++) {
+            this.ctx.beginPath();
+            if(this.grid[x][y][2] === "word" && this.grid[x][y][1] === 2) {
+                this.ctx.fillStyle = '#BA55D3';
+            }
+            else if(this.grid[x][y][2] === "word" && this.grid[x][y][1] === 3) {
+                this.ctx.fillStyle = '#FFA500';
+            }
+            else if(this.grid[x][y][2] === "cell" && this.grid[x][y][1] === 2) {
+                this.ctx.fillStyle = '#0928ff';
+            }
+            else if(this.grid[x][y][2] === "cell" && this.grid[x][y][1] === 3) {
+                this.ctx.fillStyle = '#ADD8E6';
+            }
+            else {
+                this.ctx.fillStyle = '#ffffff';
+            }
+            this.ctx.rect(x * SCALE, y * SCALE, SCALE, SCALE);
+            this.ctx.fill();
+            this.ctx.stroke();
             this.ctx.font = "30px Arial";
             this.ctx.textAlign = "center";
             this.ctx.textBaseline = "middle";
-            this.ctx.fillText(this.grid[x][y][1], x * SCALE + SCALE / 2, y * SCALE + SCALE / 2);
+            this.ctx.fillStyle = '#000';
+            if(this.grid[x][y][1] !== 1)
+                this.ctx.fillText(this.grid[x][y][1], x * SCALE + SCALE / 2, y * SCALE + SCALE / 2);
+            this.ctx.closePath();
         }
     }
 };
@@ -278,13 +319,19 @@ Map.prototype.drawLetter = function(letters) {
         if(letter.value) {
             this.ctx.beginPath();
             this.ctx.rect(letter.x * SCALE, letter.y * SCALE, SCALE, SCALE);
-            this.ctx.fillStyle = '#FF0000';
+            this.ctx.fillStyle = '#cc482d';
             this.ctx.fill();
+            this.ctx.stroke();
             this.ctx.textAlign = "center";
             this.ctx.textBaseline = "middle";
             this.ctx.font = "30px Arial";
             this.ctx.fillStyle = '#fff';
             this.ctx.fillText(letter.value[1], letter.x * SCALE + SCALE / 2, letter.y * SCALE + SCALE / 2);
+            this.ctx.textAlign = "center";
+            this.ctx.textBaseline = "middle";
+            this.ctx.font = "15px Arial";
+            this.ctx.fillStyle = '#fff';
+            this.ctx.fillText(letter.value[2], letter.x * SCALE + SCALE / 5, letter.y * SCALE + SCALE / 5);
             this.ctx.closePath();
         }
     });
