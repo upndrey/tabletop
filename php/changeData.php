@@ -69,6 +69,7 @@ else if($_POST['data'] === 'fillHand') {
                     $tempPlayer[$j] = array_pop($items);
             }
             $players[$i][2] = $tempPlayer;
+            break;
         }
     }
 

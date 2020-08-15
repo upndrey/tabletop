@@ -1,6 +1,5 @@
 let link = null;
 let login = null;
-let updateInterval = null;
 
 const WIDTH = 15;
 const HEIGHT = 15;
@@ -18,32 +17,47 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert("Пользователя не существует, либо он находится в игре!");
     }
     else {
-        await fillHand();
-        let data = await gameInfo();
-        if(data) {
-            let game = new Game();
-            game.update(data);
-            let menu = new Menu(game.players, game.turn, []);
-            let startGameDom = document.getElementById("js-startGame");
-            if(game.status === "game") {
-                clearInterval(menu.updatePlayers);
-                startGame(game);
-                startGameDom.className = "hidden";
-            }
-            else if(game.status === "lobby") {
-                let handler = async () => {
-                    await firstTurn();
-                    data = await gameInfo();
-                    game.update(data);
-                    startGame(game);
-                    startGameDom.className = "hidden";
-                    startGameDom.removeEventListener("click", handler);
-                };
-                startGameDom.addEventListener("click", handler);
-            }
+        let menu = new Menu();
+        let game = new Game(menu);
+        await game.update(menu);
+
+        if(game.status === "game") {
+            closeLobby(game, 1);
+        }
+        else if(game.status === "lobby") {
+            closeLobby(game, 0);
         }
     }
 });
+
+function closeLobby(game, isGameStarted) {
+    let startGameDom = document.getElementById("js-startGame");
+    if(isGameStarted) {
+        startGame(game);
+        startGameDom.className = "hidden";
+    }
+    else {
+        let handler = async () => {
+            await fillHand();
+            await firstTurn();
+            startGame(game);
+            startGameDom.className = "hidden";
+            startGameDom.removeEventListener("click", handler);
+        };
+        startGameDom.addEventListener("click", handler);
+
+        let startGameLisetener = setInterval(async () => {
+            if(game.status === "game") {
+                await fillHand();
+                await firstTurn();
+                startGame(game);
+                startGameDom.className = "hidden";
+                startGameDom.removeEventListener("click", handler);
+                clearInterval(startGameLisetener);
+            }
+        }, 5000)
+    }
+}
 
 // Подключение пользователя и проверка на наличие этого пользователя в игре
 async function connectUser() {
@@ -76,44 +90,62 @@ async function firstTurn() {
 
 // Создание объектов игры
 function startGame(game) {
-    game.setLetters();
+    nextTurn();
 
     let map = new Map(".js-canvas", game);
-    let nextTurnInterval = setInterval(nextTurn.bind(this, game), 1000);
-    let menu = new Menu(game);
-
-    updateInterval = setInterval(updateData.bind(this, game), 1000);
 }
 
-function Game(grid, players, items, status, turn, link) {
-    this.grid = grid;
-    this.players = players;
-    this.items = items;
-    this.status = status;
-    this.turn = turn;
-    this.link = link;
-    this.currentPlayer = this.players.find((elem) => {
-        return elem[0] === login;
-    });
+function Game(menu) {
+    this.grid = null;
+    this.players = null;
+    this.items = null;
+    this.status = null;
+    this.turn = null;
+    this.link = null;
     this.letters = null;
+    this.isYourTurn = false;
+    this.currentPlayer = null;
+    this.stopUpdateFlag = 0;
+
+    this.updateInterval = setInterval(this.update.bind(this, menu), 1000);
 }
 
-Game.prototype.update = (data) => {
-    this.grid = JSON.parse(data['grid']);
-    this.players = JSON.parse(data['players']);
-    this.items = JSON.parse(data['items']);
-    this.status = data['status'];
-    this.turn = data['turn'];
-    this.link = data['link'];
+Game.prototype.update = async function(menu) {
+    if(!this.stopUpdateFlag) {
+        let data = await gameInfo(link);
+        this.grid = JSON.parse(data['game_grid']);
+        this.players = JSON.parse(data['players']);
+        this.items = JSON.parse(data['items']);
+        this.status = data['status'];
+        this.turn = data['turn'];
+        this.link = data['link'];
+
+        this.currentPlayer = this.players.find((elem) => {
+            return elem[0] === login;
+        });
+
+        this.setLetters(menu);
+
+        menu.game = this;
+
+        let nextTurnDom = document.querySelector(".js-nextTurn");
+        if(this.isYourTurn) {
+            nextTurnDom.classList.remove("hidden");
+        }
+        else {
+            nextTurnDom.classList.add("hidden");
+        }
+
+    }
 };
 
-Game.prototype.setLetters = () => {
+Game.prototype.setLetters = function(menu) {
     this.letters = [];
     let coords = null;
     for(let i = 0; i < 7; i++) {
         if(this.currentPlayer[2][i] !== null) {
             coords = [i + 1, HEIGHT + 1, this.currentPlayer[2][i]];
-            let letter = new Letter(coords[0], coords[1], coords[2], this);
+            let letter = new Letter(coords[0], coords[1], coords[2], this, menu);
             this.letters.push(letter);
         }
     }
@@ -121,11 +153,30 @@ Game.prototype.setLetters = () => {
         for(let j = 0; j < this.grid[0].length; j++) {
             if(this.grid[i][j][0] !== null) {
                 coords = [i, j, this.grid[i][j][0]];
-                let letter = new Letter(coords[0], coords[1], coords[2], this);
+                let letter = new Letter(coords[0], coords[1], coords[2], this, menu);
                 this.letters.push(letter);
             }
         }
     }
+};
+
+
+function nextTurn() {
+    let nextTurnDom = document.querySelector(".js-nextTurn");
+    let handler = async () => {
+        let formData = new FormData();
+        formData.append('link', link);
+        formData.append('data', 'nextTurn');
+        let url = "http://tabletop/php/changeData.php";
+        await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        await fillHand();
+    };
+    nextTurnDom.addEventListener("click", handler);
+
+
 };
 
 async function fillHand() {
@@ -141,11 +192,6 @@ async function fillHand() {
     return await promise.json();
 }
 
-// Сделать так, чтобы запрос выполнялся к списку символов, а не к каждому поотдельности
-async function updateData(game) {
-    let data = await gameInfo(link);
-    game.update(data);
-}
 
 async function gameInfo() {
     let formData = new FormData();
@@ -159,128 +205,100 @@ async function gameInfo() {
 }
 
 /////// MENU /////////
-function Menu(players, turn, letters=null, map=null) {
-    this.players = players;
-    this.turn = turn;
-    this.showPlayers();
-    this.letters = letters;
-    this.map = map;
-    if(this.turn !== null) {
-        this.currentTurn();
-    }
+function Menu() {
+    this.game = null;
+    setInterval(this.showPlayers.bind(this), 1000);
+    setInterval(this.currentTurn.bind(this), 1000);
 }
 
 
 Menu.prototype.showPlayers = function () {
-    let dom = document.querySelector(".js-players");
-    while(dom.firstChild) {
-        dom.removeChild(dom.lastChild);
-    }
-    this.players.forEach((elem) => {
-        let div = document.createElement("div");
-        div.className = "players__row row";
-        div.innerHTML = `<div>${elem[0]}</div><div>${elem[3]}б.</div>`;
-        dom.appendChild(div);
+    if(this.game){
+        let dom = document.querySelector(".js-players");
+        while(dom.firstChild) {
+            dom.removeChild(dom.lastChild);
+        }
+        this.game.players.forEach((elem) => {
+            let div = document.createElement("div");
+            div.className = "players__row row";
+            div.innerHTML = `<div>${elem[0]}</div><div>${elem[3]}б.</div>`;
+            dom.appendChild(div);
     });
+    }
 };
 
 Menu.prototype.currentTurn = function () {
-    let turnDom = document.querySelector(".js-currentTurn");
-    let playerDom = document.querySelector(".js-currentPlayer");
-    turnDom.parentElement.classList.remove("hidden");
-    turnDom.innerHTML = this.turn;
-    let currentPlayer = this.players[(parseInt(this.turn) % this.players.length)];
-    playerDom.parentElement.classList.remove("hidden");
-    playerDom.innerHTML = currentPlayer[0];
+    if(this.game && this.game.turn !== null) {
+        let turnDom = document.querySelector(".js-currentTurn");
+        let playerDom = document.querySelector(".js-currentPlayer");
+        turnDom.parentElement.classList.remove("hidden");
+        turnDom.innerHTML = this.game.turn;
+        let currentPlayer = this.game.players[(parseInt(this.game.turn) % this.game.players.length)];
+        this.game.isYourTurn = this.game.players[(parseInt(this.game.turn) % this.game.players.length)][0] === this.game.currentPlayer[0];
+        playerDom.parentElement.classList.remove("hidden");
+        playerDom.innerHTML = currentPlayer[0];
+    }
 };
 
-function nextTurn(game) {
-    let nextTurnDom = document.querySelector(".js-nextTurn");
-    let handler = async () => {
-        await fillHand();
-        let formData = new FormData();
-        formData.append('link', link);
-        formData.append('data', 'nextTurn');
-        let url = "http://tabletop/php/changeData.php";
-        await fetch(url, {
-            method: 'POST',
-            body: formData
-        }).then(() => {
-        });
-    };
-
-    let nextTurnFlag = 0;
-    for(let i = 0; i < game.currentPlayer[2].length; i++) {
-        if(game.currentPlayer[2][i] === null) {
-            nextTurnFlag = 1;
-            break;
-        }
-    }
-
-    if(nextTurnFlag) {
-        nextTurnDom.classList.remove("hidden");
-        nextTurnDom.addEventListener("click", handler, {once: true});
-    }
-    else {
-        nextTurnDom.classList.add("hidden");
-        nextTurnDom.removeEventListener("click", handler);
-    }
-}
 
 ////// LETTER ///////
-function Letter(x = 0, y = 0, value="а", game) {
+function Letter(x = 0, y = 0, value="а", game, menu) {
     this.x = x;
     this.y = y;
     this.value = value;
     this.game = game;
-    document.addEventListener("mousedown", this.move.bind(this));
+    this.menu = menu;
+    document.addEventListener("mousedown", this.move.bind(this)); // Сделать один листенер на все буквы, а не отдельный листенер для каждой буквы
 }
 
 Letter.prototype.move = function (e) {
-    if(
-        e.x >= this.x * SCALE &&
-        e.x <= this.x * SCALE + SCALE &&
-        e.y >= this.y * SCALE &&
-        e.y <= this.y * SCALE + SCALE
-    ) {
-        let handler = mouseMoveEvent.bind(this);
-        clearInterval(updateInterval);
-        let player = this.players.find((elem) => {
-            return elem[0] === login;
-        });
-        if(this.x >= 0 && this.x < WIDTH && this.y >= 0 && this.y < WIDTH)
-            this.game.grid[this.x][this.y][0] = null;
-        else if(this.x >= 1 && this.x <= 7 && this.y >= WIDTH + 1 && this.y <= WIDTH + 2)
-            player[2][this.x - 1] = null;
+    if(this.game.isYourTurn) {
+        if(
+            e.x >= this.x * SCALE &&
+            e.x <= this.x * SCALE + SCALE &&
+            e.y >= this.y * SCALE &&
+            e.y <= this.y * SCALE + SCALE
+        ) {
+            let handler = mouseMoveEvent.bind(this);
+            let player = this.game.players.find((elem) => {
+                return elem[0] === login;
+            });
+            if(this.x >= 0 && this.x < WIDTH && this.y >= 0 && this.y < WIDTH)
+                this.game.grid[this.x][this.y][0] = null;
+            else if(this.x >= 1 && this.x <= 7 && this.y >= WIDTH + 1 && this.y <= WIDTH + 2)
+                player[2][this.x - 1] = null;
 
-        this.players = this.players.map((elem) => {
-            if(elem[0] === login)
-                elem = player;
-            return elem;
-        });
-        document.addEventListener("mouseup", mouseUpEvent.bind(this, handler), {once: true});
-        document.addEventListener("mousemove", handler);
+            this.game.players = this.game.players.map((elem) => {
+                if(elem[0] === login)
+                    elem = player;
+                return elem;
+            });
+
+            this.game.stopUpdateFlag = 1;
+            document.addEventListener("mouseup", mouseUpEvent.bind(this, handler), {once: true});
+            document.addEventListener("mousemove", handler);
+        }
     }
 };
 
-let mouseUpEvent = async function (handler, letters) {
+let mouseUpEvent = async function (handler) {
     document.removeEventListener("mousemove", handler);
     if(this.x >= 0 && this.x < WIDTH && this.y >= 0 && this.y < WIDTH)
         await changePosition(this, "grid");
     else if(this.x >= 1 && this.x <= 7 && this.y >= WIDTH + 1 && this.y <= WIDTH + 2)
         await changePosition(this, "hand");
-    updateInterval = await setInterval(updateInterval, 5000);
+    this.game.stopUpdateFlag = 0;
 };
 
 async function changePosition(letter, flag) {
     if(flag === "grid")
         letter.game.grid[letter.x][letter.y][0] = letter.value;
     else if(flag === "hand") {
-        let player = letter.players.find((elem) => {
+        let player = letter.game.players.find((elem) => {
             return elem[0] === login;
         });
         player[2][letter.x - 1] = letter.value;
-        letter.players = letter.players.map((elem) => {
+        letter.game.players = letter.game.players.map((elem) => {
             if(elem[0] === login)
                 elem = player;
             return elem;
@@ -289,7 +307,7 @@ async function changePosition(letter, flag) {
     let formData = new FormData();
     formData.append('link', link);
     formData.append('grid', JSON.stringify(letter.game.grid));
-    formData.append('players', JSON.stringify(letter.players));
+    formData.append('players', JSON.stringify(letter.game.players));
     formData.append('data', 'position');
     let url = "http://tabletop/php/changeData.php";
     let response = await fetch(url, {

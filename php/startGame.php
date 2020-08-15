@@ -49,6 +49,6 @@ else {
 
     $query = "UPDATE game SET players='$players' WHERE link='$gameLink'";
     mysqli_query($link, $query);
-    header('Location: http://tabletop/game.html?' . $gameLink . ":" . $login);
+    header('Location: http://tabletop/game.html?' . $gameLink . ":" . $tempLogin);
     exit;
 }
