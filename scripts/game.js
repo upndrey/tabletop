@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     else {
         let menu = new Menu();
         let game = new Game(menu);
+        let map = new Map(".js-canvas", game);
         await game.update(menu);
 
         if(game.status === "game") {
@@ -90,9 +91,9 @@ async function firstTurn() {
 
 // Создание объектов игры
 function startGame(game) {
-    nextTurn();
-
-    let map = new Map(".js-canvas", game);
+    console.log(game);
+    nextTurnListener();
+    moveListener(game);
 }
 
 function Game(menu) {
@@ -161,7 +162,7 @@ Game.prototype.setLetters = function(menu) {
 };
 
 
-function nextTurn() {
+function nextTurnListener() {
     let nextTurnDom = document.querySelector(".js-nextTurn");
     let handler = async () => {
         let formData = new FormData();
@@ -177,7 +178,7 @@ function nextTurn() {
     nextTurnDom.addEventListener("click", handler);
 
 
-};
+}
 
 async function fillHand() {
     let formData = new FormData();
@@ -207,8 +208,7 @@ async function gameInfo() {
 /////// MENU /////////
 function Menu() {
     this.game = null;
-    setInterval(this.showPlayers.bind(this), 1000);
-    setInterval(this.currentTurn.bind(this), 1000);
+    setInterval(this.currentTurn.bind(this), 500);
 }
 
 
@@ -228,15 +228,25 @@ Menu.prototype.showPlayers = function () {
 };
 
 Menu.prototype.currentTurn = function () {
-    if(this.game && this.game.turn !== null) {
-        let turnDom = document.querySelector(".js-currentTurn");
-        let playerDom = document.querySelector(".js-currentPlayer");
-        turnDom.parentElement.classList.remove("hidden");
-        turnDom.innerHTML = this.game.turn;
-        let currentPlayer = this.game.players[(parseInt(this.game.turn) % this.game.players.length)];
-        this.game.isYourTurn = this.game.players[(parseInt(this.game.turn) % this.game.players.length)][0] === this.game.currentPlayer[0];
-        playerDom.parentElement.classList.remove("hidden");
-        playerDom.innerHTML = currentPlayer[0];
+    if(this.game) {
+        this.showPlayers.call(this);
+        if(this.game.turn !== null) {
+            this.game.isYourTurn = this.game.players[(parseInt(this.game.turn) % this.game.players.length)][0] === this.game.currentPlayer[0];
+
+
+            let turnDom = document.querySelector(".js-currentTurn");
+            turnDom.parentElement.classList.remove("hidden");
+            turnDom.innerHTML = this.game.turn;
+
+            let currentPlayer = this.game.players[(parseInt(this.game.turn) % this.game.players.length)];
+            let playerDom = document.querySelector(".js-currentPlayer");
+            playerDom.parentElement.classList.remove("hidden");
+            playerDom.innerHTML = currentPlayer[0];
+
+            let lettersCountDom = document.querySelector(".js-currentLetters");
+            lettersCountDom.parentElement.classList.remove("hidden");
+            lettersCountDom.innerHTML = this.game.items.length + "";
+        }
     }
 };
 
@@ -246,68 +256,86 @@ function Letter(x = 0, y = 0, value="а", game, menu) {
     this.x = x;
     this.y = y;
     this.value = value;
-    this.game = game;
-    this.menu = menu;
-    document.addEventListener("mousedown", this.move.bind(this)); // Сделать один листенер на все буквы, а не отдельный листенер для каждой буквы
 }
 
-Letter.prototype.move = function (e) {
-    if(this.game.isYourTurn) {
-        if(
-            e.x >= this.x * SCALE &&
-            e.x <= this.x * SCALE + SCALE &&
-            e.y >= this.y * SCALE &&
-            e.y <= this.y * SCALE + SCALE
-        ) {
-            let handler = mouseMoveEvent.bind(this);
-            let player = this.game.players.find((elem) => {
-                return elem[0] === login;
-            });
-            if(this.x >= 0 && this.x < WIDTH && this.y >= 0 && this.y < WIDTH)
-                this.game.grid[this.x][this.y][0] = null;
-            else if(this.x >= 1 && this.x <= 7 && this.y >= WIDTH + 1 && this.y <= WIDTH + 2)
-                player[2][this.x - 1] = null;
+function moveListener(game) {
+    document.addEventListener("mousedown", (e) => {
+        if(game.isYourTurn) {
+            game.letters.forEach((letter) => {
+                if(
+                    e.x >= letter.x * SCALE &&
+                    e.x <= letter.x * SCALE + SCALE &&
+                    e.y >= letter.y * SCALE &&
+                    e.y <= letter.y * SCALE + SCALE
+                ) {
+                    let handler = mouseMoveEvent.bind(letter);
+                    let savedPos = null;
+                    if(letter.x >= 0 && letter.x < WIDTH && letter.y >= 0 && letter.y < WIDTH){
+                        savedPos = {
+                            'x': letter.x,
+                            'y': letter.y,
+                            'value': letter.value,
+                            'place': "grid"
+                        };
+                        game.grid[letter.x][letter.y][0] = null;
+                    }
+                    else if(letter.x >= 1 && letter.x <= 7 && letter.y >= WIDTH + 1 && letter.y <= WIDTH + 2){
+                        savedPos = {
+                            'x': letter.x,
+                            'value': letter.value,
+                            'place': "hand"
+                        };
+                        game.currentPlayer[2][letter.x - 1] = null;
+                    }
 
-            this.game.players = this.game.players.map((elem) => {
-                if(elem[0] === login)
-                    elem = player;
-                return elem;
-            });
+                    game.players = game.players.map((elem) => {
+                        if(elem[0] === login)
+                            elem = game.currentPlayer;
+                        return elem;
+                    });
 
-            this.game.stopUpdateFlag = 1;
-            document.addEventListener("mouseup", mouseUpEvent.bind(this, handler), {once: true});
-            document.addEventListener("mousemove", handler);
+                    game.stopUpdateFlag = 1;
+                    document.addEventListener("mouseup", mouseUpEvent.bind(letter, handler, game, savedPos), {once: true});
+                    document.addEventListener("mousemove", handler);
+                }
+            });
+        }
+    });
+}
+
+let mouseUpEvent = async function (handler, game, savedPos) {
+    document.removeEventListener("mousemove", handler);
+    if(savedPos.place === "grid" && game.grid[this.x][this.y][0])
+        game.grid[savedPos.x][savedPos.y][0] = savedPos.value;
+    else if(savedPos.place === "hand" && game.currentPlayer[2][this.x - 1])
+        game.currentPlayer[2][savedPos.x - 1] = savedPos.value;
+    else {
+        if(this.x >= 0 && this.x < WIDTH && this.y >= 0 && this.y < WIDTH){
+            await changePosition(this, game, "grid");
+        }
+        else if(this.x >= 1 && this.x <= 7 && this.y >= WIDTH + 1 && this.y <= WIDTH + 2){
+            await changePosition(this, game, "hand");
         }
     }
+    game.stopUpdateFlag = 0;
 };
 
-let mouseUpEvent = async function (handler) {
-    document.removeEventListener("mousemove", handler);
-    if(this.x >= 0 && this.x < WIDTH && this.y >= 0 && this.y < WIDTH)
-        await changePosition(this, "grid");
-    else if(this.x >= 1 && this.x <= 7 && this.y >= WIDTH + 1 && this.y <= WIDTH + 2)
-        await changePosition(this, "hand");
-    this.game.stopUpdateFlag = 0;
-};
-
-async function changePosition(letter, flag) {
-    if(flag === "grid")
-        letter.game.grid[letter.x][letter.y][0] = letter.value;
+async function changePosition(letter, game, flag) {
+    if(flag === "grid"){
+        game.grid[letter.x][letter.y][0] = letter.value;
+    }
     else if(flag === "hand") {
-        let player = letter.game.players.find((elem) => {
-            return elem[0] === login;
-        });
-        player[2][letter.x - 1] = letter.value;
-        letter.game.players = letter.game.players.map((elem) => {
+        game.currentPlayer[2][letter.x - 1] = letter.value;
+        game.players = game.players.map((elem) => {
             if(elem[0] === login)
-                elem = player;
+                elem = game.currentPlayer;
             return elem;
         });
     }
     let formData = new FormData();
     formData.append('link', link);
-    formData.append('grid', JSON.stringify(letter.game.grid));
-    formData.append('players', JSON.stringify(letter.game.players));
+    formData.append('grid', JSON.stringify(game.grid));
+    formData.append('players', JSON.stringify(game.players));
     formData.append('data', 'position');
     let url = "http://tabletop/php/changeData.php";
     let response = await fetch(url, {
@@ -333,12 +361,14 @@ function Map(canvas, game) {
 }
 
 Map.prototype.draw = function() {
-    this.ctx.canvas.width  = CANVAS_WIDTH;
-    this.ctx.canvas.height = CANVAS_HEIGHT;
-    this.ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    this.drawGrid();
-    this.drawHand();
-    this.drawLetter();
+    if(this.game.turn) {
+        this.ctx.canvas.width  = CANVAS_WIDTH;
+        this.ctx.canvas.height = CANVAS_HEIGHT;
+        this.ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        this.drawGrid();
+        this.drawHand();
+        this.drawLetter();
+    }
 };
 
 Map.prototype.drawGrid = function() {
