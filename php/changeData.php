@@ -43,12 +43,13 @@ else if($_POST['data'] === 'status') {
 }
 else if($_POST['data'] === 'nextTurn') {
     $gameLink = $_POST['link'];
+    $gamePlayers = $_POST['players'];
     $query = "SELECT turn FROM game WHERE link='$gameLink'";
     $result = mysqli_query($link, $query);
     $row = mysqli_fetch_assoc($result);
     $turn = $row['turn'];
     $turn++;
-    $query = "UPDATE game SET turn='$turn' WHERE link='$gameLink'";
+    $query = "UPDATE game SET turn='$turn', players='$gamePlayers' WHERE link='$gameLink'";
     mysqli_query($link, $query);
     echo json_encode(true);
 }

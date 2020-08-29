@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         let menu = new Menu();
         let game = new Game(menu);
         let map = new Map(".js-canvas", game);
+        game.map = map;
         await game.update(menu);
 
         if(game.status === "game") {
@@ -92,20 +93,47 @@ async function firstTurn() {
 // Создание объектов игры
 function startGame(game) {
     console.log(game);
-    nextTurnListener();
+    countPointsListener(game);
     moveListener(game);
+
+    if(game.turn !== null) {
+        game.isYourTurn = game.players[(parseInt(game.turn) % game.players.length)][0] === game.currentPlayer[0];
+
+        let turnDom = document.querySelector(".js-currentTurn");
+        turnDom.parentElement.classList.remove("hidden");
+        turnDom.innerHTML = game.turn;
+
+        let currentPlayer = game.players[(parseInt(game.turn) % game.players.length)];
+        let playerDom = document.querySelector(".js-currentPlayer");
+        playerDom.parentElement.classList.remove("hidden");
+        playerDom.innerHTML = currentPlayer[0];
+
+        let lettersCountDom = document.querySelector(".js-currentLetters");
+        lettersCountDom.parentElement.classList.remove("hidden");
+        lettersCountDom.innerHTML = game.items.length + "";
+
+        let turnPointsDom = document.querySelector(".js-currentTurnPoints");
+        turnPointsDom.parentElement.classList.remove("hidden");
+        turnPointsDom.innerHTML = "0";
+    }
 }
 
 function Game(menu) {
+    this.link = null;
     this.grid = null;
     this.players = null;
+    this.currentPlayer = null;
+
     this.items = null;
     this.status = null;
+
     this.turn = null;
-    this.link = null;
-    this.letters = null;
     this.isYourTurn = false;
-    this.currentPlayer = null;
+
+    this.turnPoints = 0;
+    this.wordPointsMod = 1;
+
+    this.letters = null;
     this.stopUpdateFlag = 0;
 
     this.updateInterval = setInterval(this.update.bind(this, menu), 1000);
@@ -129,14 +157,18 @@ Game.prototype.update = async function(menu) {
 
         menu.game = this;
 
-        let nextTurnDom = document.querySelector(".js-nextTurn");
+        let countPointsDom = document.querySelector(".js-countPoints");
         if(this.isYourTurn) {
-            nextTurnDom.classList.remove("hidden");
+            if(countPointsDom.classList.contains("hidden"))
+                alert("Ваш ход!");
+            countPointsDom.classList.remove("hidden");
         }
         else {
-            nextTurnDom.classList.add("hidden");
+            countPointsDom.classList.add("hidden");
         }
 
+        let turnPoingsDom = document.querySelector(".js-currentTurnPoints");
+        turnPoingsDom.innerText = this.turnPoints * this.wordPointsMod;
     }
 };
 
@@ -161,13 +193,92 @@ Game.prototype.setLetters = function(menu) {
     }
 };
 
+function countPointsListener(game) {
+    let countPointsDom = document.querySelector(".js-countPoints");
+    let handler = async () => {
+        let nextTurnDom = document.querySelector(".js-nextTurn");
+        alert("Выберите область построенного слова, если такая имеется");
+        document.addEventListener("mousedown", startSelectLetters.bind(game), {once: true});
+        nextTurnDom.classList.remove("hidden");
+    };
+    countPointsDom.addEventListener("click", handler);
+}
 
-function nextTurnListener() {
+function startSelectLetters() {
+    let selectedCells = [];
+    let interval = setInterval(drawSelectLettersPath.bind(this), 5, selectedCells);
+    nextTurnListener.call(this, interval, selectedCells);
+    let mouseMoveHandler = (e) => {
+        if(
+            e.x >= 0 &&
+            e.x <= WIDTH * SCALE &&
+            e.y >= 0 &&
+            e.y <= HEIGHT * SCALE
+        ) {
+            let ctx = this.map.ctx;
+            let x = Math.floor(e.x / SCALE);
+            let y = Math.floor(e.y / SCALE);
+            console.log(selectedCells);
+            let isFound = selectedCells.find((elem) => {
+                return elem.x === x && elem.y === y;
+            });
+            if(!isFound) {
+                selectedCells.push({'x': x, 'y': y});
+            }
+        }
+    };
+    document.addEventListener("mousemove", mouseMoveHandler);
+    document.addEventListener("mouseup", stopSelectLetters.bind(this, mouseMoveHandler), {once: true});
+}
+
+function drawSelectLettersPath(selectedCells) {
+    let ctx = this.map.ctx;
+    ctx.beginPath();
+    ctx.strokeStyle = '#0928ff';
+    selectedCells.forEach((elem) => {
+        ctx.rect(elem.x * SCALE, elem.y * SCALE, SCALE, SCALE);
+    });
+    ctx.stroke();
+    ctx.closePath();
+}
+
+function stopSelectLetters(mouseMoveHandler) {
+    document.removeEventListener("mousemove", mouseMoveHandler);
+}
+
+function nextTurnListener(interval, selectedCells) {
     let nextTurnDom = document.querySelector(".js-nextTurn");
     let handler = async () => {
+        clearInterval(interval);
+        let playerPoints = 0;
+        let wordModifier = 1;
+        selectedCells.forEach((elem) => {
+            let currentCell = this.grid[elem.x][elem.y];
+            if(currentCell[0] !== null){
+                let cellModifier = 1;
+                if(currentCell[2] === "word") {
+                    wordModifier *= currentCell[1];
+                }
+                else if(currentCell[2] === "cell") {
+                    cellModifier = currentCell[1];
+                }
+                playerPoints += currentCell[0][2] * cellModifier;
+            }
+        });
+        playerPoints *= wordModifier;
+        this.currentPlayer[3] += playerPoints;
+        console.log(this.players);
+        this.players = this.players.map((elem) => {
+            if(elem[0] === login)
+                elem = this.currentPlayer;
+            return elem;
+        });
+        console.log(this.players);
+        nextTurnDom.classList.add("hidden");
         let formData = new FormData();
         formData.append('link', link);
         formData.append('data', 'nextTurn');
+        formData.append('players', JSON.stringify(this.players));
         let url = "http://tabletop/php/changeData.php";
         await fetch(url, {
             method: 'POST',
@@ -176,8 +287,6 @@ function nextTurnListener() {
         await fillHand();
     };
     nextTurnDom.addEventListener("click", handler);
-
-
 }
 
 async function fillHand() {
@@ -208,9 +317,13 @@ async function gameInfo() {
 /////// MENU /////////
 function Menu() {
     this.game = null;
-    setInterval(this.currentTurn.bind(this), 500);
+    setInterval(this.showInfo.bind(this), 500);
 }
 
+Menu.prototype.showInfo = function() {
+    this.showPlayers();
+    this.currentTurnPoints();
+};
 
 Menu.prototype.showPlayers = function () {
     if(this.game){
@@ -227,9 +340,8 @@ Menu.prototype.showPlayers = function () {
     }
 };
 
-Menu.prototype.currentTurn = function () {
+Menu.prototype.currentTurnPoints = function () {
     if(this.game) {
-        this.showPlayers.call(this);
         if(this.game.turn !== null) {
             this.game.isYourTurn = this.game.players[(parseInt(this.game.turn) % this.game.players.length)][0] === this.game.currentPlayer[0];
 
@@ -252,7 +364,7 @@ Menu.prototype.currentTurn = function () {
 
 
 ////// LETTER ///////
-function Letter(x = 0, y = 0, value="а", game, menu) {
+function Letter(x = 0, y = 0, value = "а", game, menu) {
     this.x = x;
     this.y = y;
     this.value = value;
@@ -305,17 +417,23 @@ function moveListener(game) {
 
 let mouseUpEvent = async function (handler, game, savedPos) {
     document.removeEventListener("mousemove", handler);
-    if(savedPos.place === "grid" && game.grid[this.x][this.y][0])
-        game.grid[savedPos.x][savedPos.y][0] = savedPos.value;
-    else if(savedPos.place === "hand" && game.currentPlayer[2][this.x - 1])
-        game.currentPlayer[2][savedPos.x - 1] = savedPos.value;
-    else {
-        if(this.x >= 0 && this.x < WIDTH && this.y >= 0 && this.y < WIDTH){
+    if(this.x >= 0 && this.x < WIDTH && this.y >= 0 && this.y < WIDTH){
+        if(savedPos.place === "grid" && game.grid[this.x][this.y][0])
+            game.grid[savedPos.x][savedPos.y][0] = savedPos.value;
+        else if(savedPos.place === "hand" && game.grid[this.x][this.y][0])
+            game.currentPlayer[2][savedPos.x - 1] = savedPos.value;
+        else
             await changePosition(this, game, "grid");
-        }
-        else if(this.x >= 1 && this.x <= 7 && this.y >= WIDTH + 1 && this.y <= WIDTH + 2){
+
+    }
+    else if(this.x >= 1 && this.x <= 7 && this.y >= WIDTH + 1 && this.y <= WIDTH + 2){
+        if(savedPos.place === "grid" && game.currentPlayer[2][this.x - 1])
+            game.grid[savedPos.x][savedPos.y][0] = savedPos.value;
+        else if(savedPos.place === "hand" && game.currentPlayer[2][this.x - 1])
+            game.currentPlayer[2][savedPos.x - 1] = savedPos.value;
+        else
             await changePosition(this, game, "hand");
-        }
+
     }
     game.stopUpdateFlag = 0;
 };
