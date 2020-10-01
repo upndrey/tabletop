@@ -124,6 +124,25 @@ function startGame(game) {
         lettersCountDom.parentElement.classList.remove("hidden");
         lettersCountDom.innerHTML = game.items.length + "";
     }
+
+
+    document.querySelector(".js-canvas").addEventListener("mousemove", (e) => {
+        let x = Math.floor(e.x / SCALE);
+        let y = Math.floor(e.y / SCALE);
+        if(x >= 0 && x < 15 && y >= 0 && y < 15) {
+            let cell = game.grid[x][y];
+            let descriptionDom = document.querySelector(".js-description");
+            descriptionDom.innerHTML =
+            `Ячейка: [${y+1}, ${x+1}]<br>
+             Множитель ячейки: ${cell[1]}<br>
+             Модификатор ячейки: ${cell[2]}`;
+            if(cell[0]) {
+                descriptionDom.innerHTML += `<br>
+             Буква: ${cell[0][1]}<br>
+             Баллы буквы: ${cell[0][2]}`
+            }
+        }
+    });
 }
 
 function Game(menu) {
@@ -490,7 +509,7 @@ Map.prototype.drawLetter = function() {
         if(letter.value) {
             this.ctx.beginPath();
             this.ctx.rect(letter.x * SCALE, letter.y * SCALE, SCALE, SCALE);
-            this.ctx.fillStyle = '#cc482d';
+            this.ctx.fillStyle = 'rgba(204, 72, 45, 0.5)';
             this.ctx.fill();
             this.ctx.stroke();
             this.ctx.textAlign = "center";
