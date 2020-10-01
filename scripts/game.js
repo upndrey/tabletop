@@ -93,8 +93,20 @@ async function firstTurn() {
 // Создание объектов игры
 function startGame(game) {
     console.log(game);
-    countPointsListener(game);
     moveListener(game);
+    nextTurnListener.call(game);
+
+    let pointsInputDom = document.querySelector(".js-pointsInput");
+    let leftArrDom = document.querySelector(".js-left");
+    let rightArrDom = document.querySelector(".js-right");
+
+    leftArrDom.addEventListener("click", () => {
+        pointsInputDom.value = parseInt(pointsInputDom.value) - 1;
+    });
+
+    rightArrDom.addEventListener("click", () => {
+        pointsInputDom.value = parseInt(pointsInputDom.value) + 1;
+    });
 
     if(game.turn !== null) {
         game.isYourTurn = game.players[(parseInt(game.turn) % game.players.length)][0] === game.currentPlayer[0];
@@ -111,10 +123,6 @@ function startGame(game) {
         let lettersCountDom = document.querySelector(".js-currentLetters");
         lettersCountDom.parentElement.classList.remove("hidden");
         lettersCountDom.innerHTML = game.items.length + "";
-
-        let turnPointsDom = document.querySelector(".js-currentTurnPoints");
-        turnPointsDom.parentElement.classList.remove("hidden");
-        turnPointsDom.innerHTML = "0";
     }
 }
 
@@ -157,18 +165,17 @@ Game.prototype.update = async function(menu) {
 
         menu.game = this;
 
-        let countPointsDom = document.querySelector(".js-countPoints");
+        let nextTurnDom = document.querySelector(".js-nextTurn");
+        let addPointsDom = document.querySelector(".js-addPoints");
         if(this.isYourTurn) {
-            if(countPointsDom.classList.contains("hidden"))
-                alert("Ваш ход!");
-            countPointsDom.classList.remove("hidden");
+            addPointsDom.classList.remove("hidden");
+            nextTurnDom.classList.remove("hidden");
         }
         else {
-            countPointsDom.classList.add("hidden");
+            addPointsDom.classList.add("hidden");
+            nextTurnDom.classList.add("hidden");
         }
 
-        let turnPoingsDom = document.querySelector(".js-currentTurnPoints");
-        turnPoingsDom.innerText = this.turnPoints * this.wordPointsMod;
     }
 };
 
@@ -193,87 +200,21 @@ Game.prototype.setLetters = function(menu) {
     }
 };
 
-function countPointsListener(game) {
-    let countPointsDom = document.querySelector(".js-countPoints");
-    let handler = async () => {
-        let nextTurnDom = document.querySelector(".js-nextTurn");
-        alert("Выберите область построенного слова, если такая имеется");
-        document.addEventListener("mousedown", startSelectLetters.bind(game), {once: true});
-        nextTurnDom.classList.remove("hidden");
-    };
-    countPointsDom.addEventListener("click", handler);
-}
-
-function startSelectLetters() {
-    let selectedCells = [];
-    let interval = setInterval(drawSelectLettersPath.bind(this), 5, selectedCells);
-    nextTurnListener.call(this, interval, selectedCells);
-    let mouseMoveHandler = (e) => {
-        if(
-            e.x >= 0 &&
-            e.x <= WIDTH * SCALE &&
-            e.y >= 0 &&
-            e.y <= HEIGHT * SCALE
-        ) {
-            let ctx = this.map.ctx;
-            let x = Math.floor(e.x / SCALE);
-            let y = Math.floor(e.y / SCALE);
-            console.log(selectedCells);
-            let isFound = selectedCells.find((elem) => {
-                return elem.x === x && elem.y === y;
-            });
-            if(!isFound) {
-                selectedCells.push({'x': x, 'y': y});
-            }
-        }
-    };
-    document.addEventListener("mousemove", mouseMoveHandler);
-    document.addEventListener("mouseup", stopSelectLetters.bind(this, mouseMoveHandler), {once: true});
-}
-
-function drawSelectLettersPath(selectedCells) {
-    let ctx = this.map.ctx;
-    ctx.beginPath();
-    ctx.strokeStyle = '#0928ff';
-    selectedCells.forEach((elem) => {
-        ctx.rect(elem.x * SCALE, elem.y * SCALE, SCALE, SCALE);
-    });
-    ctx.stroke();
-    ctx.closePath();
-}
-
-function stopSelectLetters(mouseMoveHandler) {
-    document.removeEventListener("mousemove", mouseMoveHandler);
-}
-
-function nextTurnListener(interval, selectedCells) {
+function nextTurnListener() {
     let nextTurnDom = document.querySelector(".js-nextTurn");
     let handler = async () => {
-        clearInterval(interval);
-        let playerPoints = 0;
-        let wordModifier = 1;
-        selectedCells.forEach((elem) => {
-            let currentCell = this.grid[elem.x][elem.y];
-            if(currentCell[0] !== null){
-                let cellModifier = 1;
-                if(currentCell[2] === "word") {
-                    wordModifier *= currentCell[1];
-                }
-                else if(currentCell[2] === "cell") {
-                    cellModifier = currentCell[1];
-                }
-                playerPoints += currentCell[0][2] * cellModifier;
-            }
-        });
-        playerPoints *= wordModifier;
-        this.currentPlayer[3] += playerPoints;
-        console.log(this.players);
+        let pointsInputDom = document.querySelector(".js-pointsInput");
+        let points = parseInt(this.currentPlayer[3]);
+        if(pointsInputDom.value) {
+            points += parseInt(pointsInputDom.value);
+        }
+        this.currentPlayer[3] = points;
+        pointsInputDom.value = 0;
         this.players = this.players.map((elem) => {
             if(elem[0] === login)
                 elem = this.currentPlayer;
             return elem;
         });
-        console.log(this.players);
         nextTurnDom.classList.add("hidden");
         let formData = new FormData();
         formData.append('link', link);
@@ -344,8 +285,6 @@ Menu.prototype.currentTurnPoints = function () {
     if(this.game) {
         if(this.game.turn !== null) {
             this.game.isYourTurn = this.game.players[(parseInt(this.game.turn) % this.game.players.length)][0] === this.game.currentPlayer[0];
-
-
             let turnDom = document.querySelector(".js-currentTurn");
             turnDom.parentElement.classList.remove("hidden");
             turnDom.innerHTML = this.game.turn;

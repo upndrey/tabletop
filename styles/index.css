@@ -1,5 +1,5 @@
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .game {
@@ -41,4 +41,8 @@
   flex-grow: 1;
   padding: 5px;
   border: 1px solid #000;
+}
+
+.points input {
+  width: 50px;
 }

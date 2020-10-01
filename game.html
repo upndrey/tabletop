@@ -14,10 +14,14 @@
             <div class="players js-players"></div>
             <div class="hidden">Ход игрока: <span class="js-currentPlayer"></span></div>
             <div class="hidden">Номер хода: <span class="js-currentTurn"></span></div>
-            <div class="hidden">Баллов за ход: <span class="js-currentTurnPoints"></span></div>
             <div class="hidden">Букв осталось: <span class="js-currentLetters"></span></div>
+
+            <div class="menu__points points js-addPoints hidden">
+                <button class="points__left js-left"><</button>
+                <input type="number" class="points__input js-pointsInput" value="0"/>
+                <button class="points__right js-right">></button>
+            </div>
             <div class="menu__controllers controllers">
-                <button class="hidden js-countPoints">Посчитать очки</button>
                 <button class="hidden js-nextTurn">Закончить ход</button>
                 <button id="js-startGame">Начать игру</button>
             </div>
