@@ -24,7 +24,7 @@ if(isset($_POST['new_game'])) {
 
     $query = "INSERT INTO game (game_grid, players, status, items, link) VALUES (" . $grid .",'" .$players. "', '$status', " . $items . ", '$gameLink')";
     mysqli_query($link, $query);
-    header('Location: https://ruscrabble.000webhostapp.com/game.html?' . $gameLink . ":" . $login);
+    header('Location: http://tabletop/game.html?' . $gameLink . ":" . $login);
     exit;
 }
 else {

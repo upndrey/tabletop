@@ -34,4 +34,92 @@
 </body>
 <script src="https://cdn.jsdelivr.net/gh/maierfelix/Iroh@b84dde46/dist/iroh-browser.js"></script>
 <script src="scripts/game.js"></script>
+<!-- <script>
+    // test1
+    let code = `
+        function testFunc(name) {
+            let products = [],
+            i;
+
+            for (i in products) {
+                if(products.hasOwnProperty(i)) {
+                }
+            }
+            let cond = "sd";
+            switch (cond) {
+                case "one":
+                    cond = 5; 
+                case "two":
+                    cond = 5; 
+            }
+
+            return "Hello, " + name;
+        }
+
+        testFunc("name");
+    `;
+    let stage = new Iroh.Stage(code);
+    
+    let listener = stage.addListener(Iroh.FUNCTION);
+    listener.on("return", (e) => {
+        console.log(e.name + " => " + e.return);
+    });
+
+    eval(stage.script);
+
+</script> -->
+
+<!-- <script>
+    let code = `
+        var arr = [1, 2, 3  ];
+        console.log(arr);
+
+        for(var i = 0; i < arr.length; i++) {
+            for(var j = 0; j < arr.length; j++) {
+                arr[i] = arr[i] + arr[j];
+            }
+        }
+        console.log(arr);
+    `;
+    let stage = new Iroh.Stage(code);
+    
+    let listener = stage.addListener(Iroh.LOOP)
+    .on("enter", function(e) {
+        console.log(" ".repeat(e.indent) + "вход в цикл");
+    })
+    .on("leave", function(e) {
+        console.log(" ".repeat(e.indent) + "выход из цикла");
+    });
+
+    let listener2 = stage.addListener(Iroh.ASSIGN)
+    .on("fire", function(e) {
+        console.log(e.object);
+    })
+    
+
+    eval(stage.script);
+</script> -->
+
+<script>
+    let code = `
+        var temp = 0;
+        function recursive(i) {
+            if(i < 10)
+                i = recursive(i + 1);
+            
+            return i;
+        }
+
+        temp = recursive(temp);
+    `;
+    let stage = new Iroh.Stage(code);
+    
+    let listener = stage.addListener(Iroh.FUNCTION)
+    .on("enter", (e) => {
+        console.log(e.arguments);
+    });
+    
+    eval(stage.script);
+</script> 
+
 </html>

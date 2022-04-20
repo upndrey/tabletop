@@ -40,7 +40,6 @@ function testFunc(name) {
  
     for (i in products) {
         if(products.hasOwnProperty(i)) {
-            console.log('property: ' + i);
         }
     }
     let cond = "sd";
@@ -89,7 +88,7 @@ async function connectUser() {
     formData.append('link', link);
     formData.append('login', login);
     formData.append('data', 'players');
-    let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+    let url = "http://tabletop/php/changeData.php";
     let promise = await fetch(url, {
         method: 'POST',
         body: formData
@@ -102,7 +101,7 @@ async function firstTurn() {
     let formData = new FormData();
     formData.append('link', link);
     formData.append('data', 'status');
-    let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+    let url = "http://tabletop/php/changeData.php";
     let promise = await fetch(url, {
         method: 'POST',
         body: formData
@@ -114,7 +113,6 @@ async function firstTurn() {
 
 // Создание объектов игры
 function startGame(game) {
-    console.log(game);
     moveListener(game);
     nextTurnListener.call(game);
     endGameListener.call(game);
@@ -234,7 +232,6 @@ Game.prototype.update = async function(menu) {
             endGameDom.classList.add("hidden");
         }
 
-        console.log(this.isYourTurn, this.currentPlayer);
         if(this.players.every((player) => { return player[1]})) {
             fullEndGame(this.players);
             addPointsDom.classList.add("hidden");
@@ -276,7 +273,7 @@ function nextTurnListener(isSkipTurn) {
             formData.append('link', link);
             formData.append('data', 'nextTurn');
             formData.append('players', JSON.stringify(this.players));
-            let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+            let url = "http://tabletop/php/changeData.php";
             await fetch(url, {
                 method: 'POST',
                 body: formData
@@ -306,7 +303,7 @@ function nextTurnListener(isSkipTurn) {
             formData.append('link', link);
             formData.append('data', 'nextTurn');
             formData.append('players', JSON.stringify(this.players));
-            let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+            let url = "http://tabletop/php/changeData.php";
             await fetch(url, {
                 method: 'POST',
                 body: formData
@@ -351,7 +348,7 @@ function endGameListener() {
         formData.append('player', login);
         formData.append('end', 'true');
         formData.append('players', JSON.stringify(this.players));
-        let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+        let url = "http://tabletop/php/changeData.php";
         await fetch(url, {
             method: 'POST',
             body: formData
@@ -386,7 +383,7 @@ async function fillHand() {
     formData.append('link', link);
     formData.append('player', login);
     formData.append('data', 'fillHand');
-    let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+    let url = "http://tabletop/php/changeData.php";
     let promise = await fetch(url, {
         method: 'POST',
         body: formData
@@ -398,7 +395,7 @@ async function fillHand() {
 async function gameInfo() {
     let formData = new FormData();
     formData.append('link', link);
-    let url = "https://ruscrabble.000webhostapp.com/php/getData.php";
+    let url = "http://tabletop/php/getData.php";
     let response = await fetch(url, {
         method: 'POST',
         body: formData
@@ -545,7 +542,7 @@ async function changePosition(letter, game, flag) {
     formData.append('grid', JSON.stringify(game.grid));
     formData.append('players', JSON.stringify(game.players));
     formData.append('data', 'position');
-    let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+    let url = "http://tabletop/php/changeData.php";
     let response = await fetch(url, {
         method: 'POST',
         body: formData
