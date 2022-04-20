@@ -1,4 +1,4 @@
-let link = null;
+link = null;
 let login = null;
 
 const WIDTH = 15;
@@ -13,7 +13,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     link = temp[0];
     login = temp[1];
     let doesConnected = await connectUser(link, login);
-    if(doesConnected) { // Заменить после дебаггинга /////////////////////////////////////////////////////////////////
+    let linkDom = document.getElementById("js-link");
+    linkDom.innerText = link;
+    if(!doesConnected) {
         alert("Пользователя не существует, либо он находится в игре!");
     }
     else {
@@ -67,7 +69,7 @@ async function connectUser() {
     formData.append('link', link);
     formData.append('login', login);
     formData.append('data', 'players');
-    let url = "http://tabletop/php/changeData.php";
+    let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
     let promise = await fetch(url, {
         method: 'POST',
         body: formData
@@ -80,7 +82,7 @@ async function firstTurn() {
     let formData = new FormData();
     formData.append('link', link);
     formData.append('data', 'status');
-    let url = "http://tabletop/php/changeData.php";
+    let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
     let promise = await fetch(url, {
         method: 'POST',
         body: formData
@@ -95,6 +97,7 @@ function startGame(game) {
     console.log(game);
     moveListener(game);
     nextTurnListener.call(game);
+    endGameListener.call(game);
 
     let pointsInputDom = document.querySelector(".js-pointsInput");
     let leftArrDom = document.querySelector(".js-left");
@@ -116,6 +119,17 @@ function startGame(game) {
         turnDom.innerHTML = game.turn;
 
         let currentPlayer = game.players[(parseInt(game.turn) % game.players.length)];
+
+        if(game.players.every((player) => { return player[1]})) {
+            fullEndGame(game.players);
+        }
+        else {
+            if(currentPlayer[1] === true) {
+                nextTurnListener.call(game, true);
+            }
+        }
+
+
         let playerDom = document.querySelector(".js-currentPlayer");
         playerDom.parentElement.classList.remove("hidden");
         playerDom.innerHTML = currentPlayer[0];
@@ -184,16 +198,30 @@ Game.prototype.update = async function(menu) {
 
         menu.game = this;
 
+
+
         let nextTurnDom = document.querySelector(".js-nextTurn");
         let addPointsDom = document.querySelector(".js-addPoints");
+        let endGameDom = document.querySelector(".js-end");
         if(this.isYourTurn) {
             addPointsDom.classList.remove("hidden");
             nextTurnDom.classList.remove("hidden");
+            endGameDom.classList.remove("hidden");
         }
         else {
             addPointsDom.classList.add("hidden");
             nextTurnDom.classList.add("hidden");
+            endGameDom.classList.add("hidden");
         }
+
+        console.log(this.isYourTurn, this.currentPlayer);
+        if(this.players.every((player) => { return player[1]})) {
+            fullEndGame(this.players);
+            addPointsDom.classList.add("hidden");
+            nextTurnDom.classList.add("hidden");
+            endGameDom.classList.add("hidden");
+        }
+
 
     }
 };
@@ -219,8 +247,69 @@ Game.prototype.setLetters = function(menu) {
     }
 };
 
-function nextTurnListener() {
+function nextTurnListener(isSkipTurn) {
     let nextTurnDom = document.querySelector(".js-nextTurn");
+    if(isSkipTurn) {
+        let handlerSkip = async () => {
+            nextTurnDom.classList.add("hidden");
+            let formData = new FormData();
+            formData.append('link', link);
+            formData.append('data', 'nextTurn');
+            formData.append('players', JSON.stringify(this.players));
+            let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+            await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+        };
+
+        if(isSkipTurn) {
+            handlerSkip();
+        }
+    }
+    else {
+        let handler = async () => {
+            let pointsInputDom = document.querySelector(".js-pointsInput");
+            let points = parseInt(this.currentPlayer[3]);
+            if(pointsInputDom.value) {
+                points += parseInt(pointsInputDom.value);
+            }
+            this.currentPlayer[3] = points;
+            pointsInputDom.value = 0;
+            this.players = this.players.map((elem) => {
+                if(elem[0] === login)
+                    elem = this.currentPlayer;
+                return elem;
+            });
+            nextTurnDom.classList.add("hidden");
+            let formData = new FormData();
+            formData.append('link', link);
+            formData.append('data', 'nextTurn');
+            formData.append('players', JSON.stringify(this.players));
+            let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
+            await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+            await fillHand();
+
+            if(this.players.every((player) => { return player[1]})) {
+                fullEndGame(this.players);
+                return;
+            }
+
+            let currentPlayer = this.players[(parseInt(this.turn) % this.players.length)];
+            if(currentPlayer[1] === true) {
+                nextTurnListener.call(this, true);
+            }
+        };
+        nextTurnDom.addEventListener("click", handler);
+    }
+
+}
+
+function endGameListener() {
+    let endGameDom = document.querySelector(".js-end");
     let handler = async () => {
         let pointsInputDom = document.querySelector(".js-pointsInput");
         let points = parseInt(this.currentPlayer[3]);
@@ -228,25 +317,48 @@ function nextTurnListener() {
             points += parseInt(pointsInputDom.value);
         }
         this.currentPlayer[3] = points;
+        this.currentPlayer[1] = true;
         pointsInputDom.value = 0;
         this.players = this.players.map((elem) => {
             if(elem[0] === login)
                 elem = this.currentPlayer;
             return elem;
         });
-        nextTurnDom.classList.add("hidden");
+        endGameDom.classList.add("hidden");
         let formData = new FormData();
         formData.append('link', link);
         formData.append('data', 'nextTurn');
+        formData.append('player', login);
+        formData.append('end', 'true');
         formData.append('players', JSON.stringify(this.players));
-        let url = "http://tabletop/php/changeData.php";
+        let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
         await fetch(url, {
             method: 'POST',
             body: formData
         });
-        await fillHand();
     };
-    nextTurnDom.addEventListener("click", handler);
+    endGameDom.addEventListener("click", handler);
+}
+
+function fullEndGame(players) {
+    let domWinner = document.querySelector(".js-winner");
+    let maxPoints = players[0][3];
+    let winner = players[0][0];
+    players.forEach((player) => {
+        if(maxPoints < player[3]) {
+            maxPoints = player[3];
+            winner = player[0];
+        }
+    });
+    domWinner.innerText = winner;
+    domWinner.parentElement.classList.remove("hidden");
+
+    let nextTurnDom = document.querySelector(".js-nextTurn");
+    let addPointsDom = document.querySelector(".js-addPoints");
+    let endGameDom = document.querySelector(".js-end");
+    addPointsDom.classList.remove("hidden");
+    nextTurnDom.classList.remove("hidden");
+    endGameDom.classList.remove("hidden");
 }
 
 async function fillHand() {
@@ -254,7 +366,7 @@ async function fillHand() {
     formData.append('link', link);
     formData.append('player', login);
     formData.append('data', 'fillHand');
-    let url = "http://tabletop/php/changeData.php";
+    let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
     let promise = await fetch(url, {
         method: 'POST',
         body: formData
@@ -266,7 +378,7 @@ async function fillHand() {
 async function gameInfo() {
     let formData = new FormData();
     formData.append('link', link);
-    let url = "http://tabletop/php/getData.php";
+    let url = "https://ruscrabble.000webhostapp.com/php/getData.php";
     let response = await fetch(url, {
         method: 'POST',
         body: formData
@@ -413,7 +525,7 @@ async function changePosition(letter, game, flag) {
     formData.append('grid', JSON.stringify(game.grid));
     formData.append('players', JSON.stringify(game.players));
     formData.append('data', 'position');
-    let url = "http://tabletop/php/changeData.php";
+    let url = "https://ruscrabble.000webhostapp.com/php/changeData.php";
     let response = await fetch(url, {
         method: 'POST',
         body: formData

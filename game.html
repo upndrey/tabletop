@@ -15,6 +15,7 @@
             <div class="hidden">Ход игрока: <span class="js-currentPlayer"></span></div>
             <div class="hidden">Номер хода: <span class="js-currentTurn"></span></div>
             <div class="hidden">Букв осталось: <span class="js-currentLetters"></span></div>
+            <div class="hidden">Победитель: <span class="js-winner"></span></div>
 
             <div class="menu__points points js-addPoints hidden">
                 <button class="points__left js-left"><</button>
@@ -23,7 +24,9 @@
             </div>
             <div class="menu__controllers controllers">
                 <button class="hidden js-nextTurn">Закончить ход</button>
+                <button class="hidden js-end">Закончить игру</button>
                 <button id="js-startGame">Начать игру</button>
+                <p>Ссылка на игру: <span id="js-link"></span></p>
             </div>
             <div class="js-description"></div>
         </div>

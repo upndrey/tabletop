@@ -10,13 +10,19 @@ if($_POST['data'] === 'players') {
     $row = mysqli_fetch_assoc($result);
     $players = json_decode($row['players']);
     $temp = [$login, false, [null, null, null, null, null, null, null], 0];
-    $playerId = array_search($temp, $players, true);
-    if($playerId !== false){
-        if($players[$playerId][1] === true) {
-            echo json_encode(false);
-            exit;
+    $playerId = false;
+    for($i = 0; $i < count($players); $i++) {
+        if($players[$i][0] === $temp[0]) {
+            $playerId = true;
+            break;
         }
-        $players[$playerId][1] = true;
+    }
+    if($playerId !== false){
+        // if($players[$playerId][1] === true) {
+        //     echo json_encode(false);
+        //     exit;
+        // }
+        //$players[$playerId][1] = true;
         $players = json_encode($players, JSON_UNESCAPED_UNICODE);
         $query = "UPDATE game SET players='$players' WHERE link='$gameLink'";
         mysqli_query($link, $query);
@@ -43,13 +49,13 @@ else if($_POST['data'] === 'status') {
 }
 else if($_POST['data'] === 'nextTurn') {
     $gameLink = $_POST['link'];
-    $gamePlayers = $_POST['players'];
+    $players = $_POST['players'];
     $query = "SELECT turn FROM game WHERE link='$gameLink'";
     $result = mysqli_query($link, $query);
     $row = mysqli_fetch_assoc($result);
     $turn = $row['turn'];
     $turn++;
-    $query = "UPDATE game SET turn='$turn', players='$gamePlayers' WHERE link='$gameLink'";
+    $query = "UPDATE game SET turn='$turn', players='$players' WHERE link='$gameLink'";
     mysqli_query($link, $query);
     echo json_encode(true);
 }
@@ -65,9 +71,23 @@ else if($_POST['data'] === 'fillHand') {
     for($i = 0; $i < count($players); $i++) {
         if($players[$i][0] === $player) {
             $tempPlayer = $players[$i][2];
+            $isFullHandShuffle = true;
             for($j = 0; $j < count($tempPlayer); $j++) {
-                if($tempPlayer[$j] === null)
+                if($tempPlayer[$j] === null) {
                     $tempPlayer[$j] = array_pop($items);
+                    $isFullHandShuffle = false;
+                  }
+            }
+            if($isFullHandShuffle) {
+                $savedHand = [];
+                for($j = 0; $j < count($tempPlayer); $j++) {
+                    array_push($items, $tempPlayer[$j]);
+                    $tempPlayer[$j] = null;
+                }
+                shuffle($items);
+                for($j = 0; $j < count($tempPlayer); $j++) {
+                    $tempPlayer[$j] = array_pop($items);
+                }
             }
             $players[$i][2] = $tempPlayer;
             break;
