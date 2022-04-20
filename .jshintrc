@@ -1,3 +1,22 @@
+
 {
-    "esversion": 8
+    "esversion": 8,
+    "browser": true,
+    "undef": true,
+    "varstmt": true,
+    "forin": true,
+    "unused": true,
+    "funcscope": true,
+    "lastsemic": true,
+    "moz": true,
+    "jquery": true,
+    "module": true,
+    "devel": true,
+    "globals": {
+        "window": true,
+        "document": true,
+        "console": true,
+        "alert": true
+    }
 }
+

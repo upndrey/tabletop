@@ -34,6 +34,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
+function testFunc(name) {
+    let products = [],
+    i;
+ 
+    for (i in products) {
+        if(products.hasOwnProperty(i)) {
+            console.log('property: ' + i);
+        }
+    }
+    let cond = "sd";
+    switch (cond) {
+        case "one":
+            cond = 5; 
+        case "two":
+            cond = 5; 
+    }
+
+     return "Hello, " + name;
+}
+
 function closeLobby(game, isGameStarted) {
     let startGameDom = document.getElementById("js-startGame");
     if(isGameStarted) {
