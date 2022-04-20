@@ -20,11 +20,11 @@ if(isset($_POST['new_game'])) {
 
     $status = "lobby";
 
-    $gameLink = uniqid(rand(), 1);
+    $gameLink = uniqid();
 
     $query = "INSERT INTO game (game_grid, players, status, items, link) VALUES (" . $grid .",'" .$players. "', '$status', " . $items . ", '$gameLink')";
     mysqli_query($link, $query);
-    header('Location: http://tabletop/game.html?' . $gameLink . ":" . $login);
+    header('Location: https://ruscrabble.000webhostapp.com/game.html?' . $gameLink . ":" . $login);
     exit;
 }
 else {
